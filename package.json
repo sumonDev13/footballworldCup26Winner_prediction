@@ -1,0 +1,5 @@
+{
+  "name": "worldcup26-predictor",
+  "private": true,
+  "workspaces": ["backend", "frontend"]
+}
