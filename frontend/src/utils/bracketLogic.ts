@@ -116,42 +116,35 @@ export function buildRoundOf32(
   })
 }
 
+type Pairings = [number, number][]
+
+const R32_TO_R16: Pairings = [[1, 4], [0, 2], [3, 5], [6, 7], [10, 11], [8, 9], [13, 15], [12, 14]]
+const R16_TO_QF: Pairings = [[0, 1], [4, 5], [2, 3], [6, 7]]
+const QF_TO_SF: Pairings = [[0, 1], [2, 3]]
+
+const NEXT_ID: Record<string, string> = {
+  '16': 'r16',
+  '8': 'qf',
+  '4': 'sf',
+  '2': 'final',
+}
+
 export function buildNextRound(prevMatches: Matchup[]): Matchup[] {
   const winners = prevMatches.map(m => m.winner)
+  const count = winners.length
 
-  if (winners.length === 4) {
-    return [
-      { id: 'sf-1', home: winners[0] ?? null, away: winners[1] ?? null, winner: null },
-      { id: 'sf-2', home: winners[2] ?? null, away: winners[3] ?? null, winner: null },
-    ]
-  }
+  if (count <= 1) return []
+  if (count === 2) return [{ id: 'final', home: winners[0] ?? null, away: winners[1] ?? null, winner: null }]
 
-  if (winners.length === 2) {
-    return [
-      { id: 'final', home: winners[0] ?? null, away: winners[1] ?? null, winner: null },
-    ]
-  }
+  const pairings = count === 16 ? R32_TO_R16 : count === 8 ? R16_TO_QF : count === 4 ? QF_TO_SF : []
+  const prefix = NEXT_ID[String(count)] ?? ''
 
-  if (winners.length === 1) {
-    return []
-  }
-
-  const pairs: [number, number][] = []
-  if (winners.length === 8) {
-    pairs.push([0, 1], [2, 3], [4, 5], [6, 7])
-  } else if (winners.length === 16) {
-    pairs.push([0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11], [12, 13], [14, 15])
-  }
-
-  return pairs.map(([a, b], i) => {
-    const prefix = prevMatches.length === 16 ? 'r16' : prevMatches.length === 8 ? 'qf' : ''
-    return {
-      id: `${prefix}-${i + 1}`,
-      home: winners[a] ?? null,
-      away: winners[b] ?? null,
-      winner: null,
-    }
-  })
+  return pairings.map(([a, b], i) => ({
+    id: `${prefix}-${i + 1}`,
+    home: winners[a] ?? null,
+    away: winners[b] ?? null,
+    winner: null,
+  }))
 }
 
 export function getThirdPlacedTeams(groups: Record<string, GroupPositions>): Team[] {
